@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>鸟类图鉴 · 思维导图</title>
+<style>
+  :root {
+    --ink: #6b5341;
+    --ink-soft: #8a7159;
+    --line: #e6d9c6;
+    --panel: rgba(255,252,244,.9);
+    --accent: #e0762f;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, #fdf6e7 0%, #fdf1e0 60%, #eef3e4 100%);
+    display: flex; flex-direction: column; overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 18px; flex: 0 0 auto;
+    background: rgba(255,253,248,.7); backdrop-filter: blur(8px);
+    border-bottom: 2px solid #fff;
+  }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .04em; }
+  header .sub { font-size: 12px; color: var(--ink-soft); }
+  header .home {
+    margin-left: auto; text-decoration: none; font-size: 13px; font-weight: 600;
+    color: #fff; background: linear-gradient(180deg,#f2a45f,#e0762f);
+    padding: 7px 14px; border-radius: 10px;
+    box-shadow: 0 3px 0 #b85a1e;
+  }
+  header .home:active { transform: translateY(2px); box-shadow: 0 1px 0 #b85a1e; }
+
+  /* 左侧生态类群切换 + 右侧导图树 */
+  #body { flex: 1 1 auto; display: flex; min-height: 0; }
+
+  nav { flex: 0 0 172px; padding: 14px 10px; display: flex; flex-direction: column; gap: 6px;
+        overflow-y: auto; }
+  nav button {
+    border: 2px solid #fff; background: var(--panel); border-radius: 14px;
+    padding: 10px 12px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+    text-align: left; cursor: pointer; box-shadow: 0 4px 10px rgba(120,90,60,.10);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  nav button .n { font-size: 11px; font-weight: 400; color: var(--ink-soft); }
+  nav button:hover { border-color: #f2c9a0; }
+  nav button.on {
+    background: linear-gradient(180deg,#fff6ea,#ffe9d2);
+    border-color: var(--accent); box-shadow: 0 4px 0 rgba(224,118,47,.25);
+  }
+  nav button.on .n { color: #b85a1e; }
+
+  main { flex: 1 1 auto; overflow-y: auto; padding: 16px 18px 40px; }
+
+  .group-head { margin: 0 0 4px; }
+  .group-head h2 { font-size: 18px; margin: 0 0 4px; }
+  .group-head p { font-size: 13px; color: var(--ink-soft); margin: 0 0 18px; max-width: 720px; line-height: 1.7; }
+
+  /* 科块 */
+  .family { margin-bottom: 22px; }
+  .family-head {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 0 0 6px 12px; border-left: 4px solid var(--accent);
+    margin-bottom: 12px;
+  }
+  .family-head h3 { font-size: 15px; margin: 0; }
+  .family-head .latin { font-size: 12px; color: var(--ink-soft); font-style: italic; }
+  .family-head .order { font-size: 11px; color: #b0a08c; margin-left: auto; }
+
+  /* 物种卡片 */
+  .cards { display: flex; flex-wrap: wrap; gap: 14px; }
+  .card {
+    width: 216px; background: var(--panel); border: 2px solid #fff; border-radius: 16px;
+    box-shadow: 0 6px 14px rgba(120,90,60,.10);
+    padding: 14px 11px 11px; text-align: center;
+  }
+  .card canvas { display: block; margin: 0 auto; }
+  .card .nm { font-size: 13px; font-weight: 600; margin-top: 6px; }
+  .card .lat { font-size: 11px; color: var(--ink-soft); font-style: italic; }
+  .card .sil { font-size: 11px; color: var(--ink-soft); line-height: 1.55; margin-top: 6px; text-align: left; }
+  .card .hab { font-size: 10px; color: #b0a08c; margin-top: 4px; text-align: left; }
+  /* 体型指示：相对体型系数转成小圆点 */
+  .card .sz { margin-top: 6px; display: flex; justify-content: center; gap: 3px; }
+  .card .sz i { width: 6px; height: 6px; border-radius: 50%; background: #d3c3ad; }
+  .card .sz i.on { background: var(--accent); }
+
+  #count { font-size: 11px; color: #b0a08c; margin-left: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>鸟类图鉴</h1>
+  <span class="sub">按生态类群 · 目 → 科 → 种</span>
+  <span id="count"></span>
+  <a class="home" href="index.html">玩游戏</a>
+</header>
+
+<div id="body">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+
+<script src="birds.js"></script>
+<script>
+(function () {
+  const nav = document.getElementById('nav');
+  const main = document.getElementById('main');
+  const countEl = document.getElementById('count');
+
+  // 每个类群的主色，用于卡片描边点缀
+  const TINT = {
+    terrestrial: '#c8a06a', wader: '#9fb4c0', waterfowl: '#7fa8c8',
+    raptor: '#c08a5a', climber: '#a8b878', songbird: '#d8a878',
+  };
+
+  let data = null;
+  let active = null;
+
+  function renderNav() {
+    nav.textContent = '';
+    data.groups.forEach((g) => {
+      const b = document.createElement('button');
+      const n = g.taxa.reduce((s, x) => s + x.species.length, 0);
+      b.appendChild(document.createTextNode(`${g.icon || ''} ${g.name}`));
+      const span = document.createElement('span');
+      span.className = 'n';
+      span.textContent = `${g.taxa.length} 科 · ${n} 种`;
+      b.appendChild(span);
+      b.className = g.key === active ? 'on' : '';
+      b.onclick = () => { active = g.key; renderNav(); renderMain(); };
+      nav.appendChild(b);
+    });
+  }
+
+  function renderMain() {
+    const g = data.groups.find((x) => x.key === active);
+    if (!g) {
+      main.textContent = '';
+      const none = document.createElement('p');
+      none.textContent = '没有数据';
+      main.appendChild(none);
+      return;
+    }
+    const total = g.taxa.reduce((s, x) => s + x.species.length, 0);
+    countEl.textContent = `${total} 种`;
+
+    main.textContent = '';
+    const head = document.createElement('div');
+    head.className = 'group-head';
+    const h2 = document.createElement('h2');
+    h2.textContent = `${g.icon || ''} ${g.name}`;
+    const p = document.createElement('p');
+    p.textContent = g.blurb || '';
+    head.appendChild(h2);
+    head.appendChild(p);
+    main.appendChild(head);
+
+    g.taxa.forEach((taxon) => {
+      const box = document.createElement('section');
+      box.className = 'family';
+      const fh = document.createElement('div');
+      fh.className = 'family-head';
+      const h3 = document.createElement('h3');
+      h3.textContent = taxon.name;
+      const lat = document.createElement('span');
+      lat.className = 'latin';
+      lat.textContent = taxon.latin;
+      const ord = document.createElement('span');
+      ord.className = 'order';
+      ord.textContent = taxon.order;
+      fh.appendChild(h3); fh.appendChild(lat); fh.appendChild(ord);
+      box.appendChild(fh);
+
+      const cards = document.createElement('div');
+      cards.className = 'cards';
+      taxon.species.forEach((sp, i) => cards.appendChild(speciesCard(sp, i, taxon)));
+      box.appendChild(cards);
+      main.appendChild(box);
+    });
+  }
+
+  /* 一张物种卡：用该物种自己的羽色渲染一只毛绒鸟缩略图 */
+  function speciesCard(sp, i, taxon) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.borderColor = 'rgba(255,255,255,.9)';
+
+    // —— 渲染缩略鸟。直接复用 Birds.draw，把 data 里的物种适配成 spec ——
+    /* 半径按 size 缩放：size 是真实体型系数（1.0 = 中等），
+       这样导图里的鸟一眼能比出大小 —— 蓝孔雀 1.4 就该比鹌鹑 0.85 大一截。
+       画布尺寸对所有卡片统一，鸟在内部缩放并底部对齐，
+       否则每格自适应会让体型差异消失（这个坑 preview.html 踩过）。 */
+    const R_MAX = 44;                                  // 最大体型对应的半径
+    // 体型线性映射：size 0.6（最小）→ 半径 0.66·R_MAX；size 1.45（最大）→ R_MAX
+    const t = Math.max(0, Math.min(1, ((sp.size || 1) - 0.6) / (1.45 - 0.6)));
+    const r = R_MAX * (0.66 + 0.34 * t);
+    /* 有脖子的鸟要往上长，画布得加高，否则头顶会被裁掉。
+       neck 档位与 birds.js 的 neckRibbon 配置对应：
+       2 → 0.72r，3 → 1.15r；再留一点给头部小球和绒毛。 */
+    const neckH = sp.neck === 3 ? r * 1.5 : sp.neck === 2 ? r * 1.0 : sp.neck === 1 ? r * 0.4 : 0;
+    const halfW = R_MAX * 1.42;                         // 统一画布半宽
+    const halfH = R_MAX * 1.42 + neckH * 0.5;
+    const S = 2;   // 超采样，缩到 CSS 尺寸后边缘更顺
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(halfW * 2 * S);
+    cv.height = Math.ceil(halfH * 2 * S);
+    cv.style.width = Math.ceil(halfW * 2) + 'px';
+    cv.style.height = Math.ceil(halfH * 2) + 'px';
+    const ctx = cv.getContext('2d');
+    ctx.scale(S, S);
+    ctx.translate(halfW, halfH);
+    // 底部对齐：小鸟坐在地面上，体型差异才读得出来
+    ctx.translate(0, halfH - r - 3);
+    Birds.draw(ctx, {
+      r: r,
+      seed: 1000 + (sp.name.length * 37 + i * 7919),
+      /* data/birds.json 与 birds.js 的 SPECIES 字段名一致，
+         形态字段（face/eyeCol/breast/brow/nape）也一并透传 ——
+         否则导图里的猫头鹰会退化成通用鸟，丢掉心形脸、虹膜色、胸纹。
+         key 用 'owl' 才会触发鸮类分支（大眼 + 脸盘）。 */
+      spec: {
+        key: sp.face || sp.eyeCol || sp.breast ? 'owl' : 'bird',
+        name: sp.name,
+        body: sp.body, belly: sp.belly, wing: sp.wing,
+        beak: sp.beak, tail: sp.wing,
+        crest: sp.crest || 0,
+        face: sp.face, eyeCol: sp.eyeCol, breast: sp.breast,
+        brow: sp.brow || 0, nape: sp.nape || 0,
+        neck: sp.neck || 0,
+      },
+    }, 3000);
+
+    const nm = document.createElement('div');
+    nm.className = 'nm';
+    nm.textContent = sp.name;
+
+    const lat = document.createElement('div');
+    lat.className = 'lat';
+    lat.textContent = sp.latin || '';
+
+    const sil = document.createElement('div');
+    sil.className = 'sil';
+    sil.textContent = sp.silhouette || '';
+
+    const hab = document.createElement('div');
+    hab.className = 'hab';
+    hab.textContent = sp.habitat || '';
+
+    // 体型：1.0 起，每 +0.25 点亮一颗，最多 5 颗
+    const sz = document.createElement('div');
+    sz.className = 'sz';
+    const lv = Math.max(1, Math.min(5, Math.round(((sp.size || 1) - 0.6) / 0.28) + 1));
+    for (let k = 0; k < 5; k++) {
+      const d = document.createElement('i');
+      if (k < lv) d.className = 'on';
+      sz.appendChild(d);
+    }
+
+    card.appendChild(cv);
+    card.appendChild(nm);
+    card.appendChild(lat);
+    card.appendChild(sz);
+    card.appendChild(sil);
+    if (sp.habitat) card.appendChild(hab);
+    return card;
+  }
+
+  // 载入数据。JSON 是本地静态文件，直接 fetch
+  fetch('data/birds.json', { cache: 'no-store' })
+    .then((r) => r.json())
+    .then((d) => {
+      data = d;
+      active = d.groups[0].key;
+      renderNav();
+      renderMain();
+    })
+    .catch((e) => {
+      main.textContent = '数据载入失败：' + e.message;
+    });
+
+  window.__mindmap = {
+    // 调试：确认每种鸟都被渲染过
+    probe: () => ({ groups: data && data.groups.map(g => ({ key: g.key, n: g.taxa.reduce((s,x)=>s+x.species.length,0) })) }),
+  };
+})();
+</script>
+</body>
+</html>

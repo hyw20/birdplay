@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>毛绒小鸟合成大西瓜</title>
+<style>
+  :root {
+    --sky-1: #fdf6e7; --sky-2: #ffe9d2; --grass: #dff0d4;
+    --ink: #6b5341; --panel: rgba(255,252,244,.86);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 62%, var(--grass) 100%);
+    display: flex; align-items: stretch; justify-content: center;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  #wrap { display: flex; width: 100%; max-width: 1100px; }
+
+  /* 左边小鸟，右边记录 —— 窄屏就上下排 */
+  #field {
+    position: relative; flex: 1 1 auto; min-width: 0;
+    border-radius: 26px; margin: 14px 8px 14px 14px;
+    background: linear-gradient(180deg,#fffdf7 0%, #fdf4e4 100%);
+    box-shadow: 0 18px 40px rgba(120,90,60,.18), inset 0 0 0 3px #fff;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  #field::after {  /* 草地上的缝布边框 */
+    content: ""; position: absolute; inset: 10px; border-radius: 20px;
+    border: 2px dashed rgba(190,160,120,.35); pointer-events: none;
+    transition: opacity .18s ease;
+  }
+  #field:has(#over.on)::after { opacity: 0; }  /* 结算浮层开启时收掉缝布虚线，免得透出来显脏 */
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  #hint {
+    position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    font-size: 13px; color: #a08a72; letter-spacing: .04em; pointer-events: none;
+    transition: opacity .4s;
+  }
+  #hint.hide { opacity: 0; }
+
+  #side {
+    flex: 0 0 232px; display: flex; flex-direction: column; gap: 10px;
+    padding: 14px 14px 14px 0;
+  }
+  .card {
+    background: var(--panel); border-radius: 18px; padding: 12px 14px;
+    box-shadow: 0 8px 18px rgba(120,90,60,.12);
+    border: 2px solid #fff;
+  }
+  .card h2 { margin: 0 0 8px; font-size: 14px; letter-spacing: .06em; color: #8a7159; font-weight: 600; }
+  /* 记录卡：标签与数值之间加虚线引导，收紧窄卡片里两端对齐的松散感 */
+  .row { display: flex; align-items: baseline; gap: 8px; font-size: 14px; padding: 3px 0; }
+  .row::after {
+    content: ""; order: 1; flex: 1 1 12px; align-self: center;
+    border-bottom: 2px dotted rgba(190,160,120,.45); border-radius: 2px;
+  }
+  .row b { order: 2; font-variant-numeric: tabular-nums; }
+  #next { display: flex; align-items: center; gap: 8px; }
+  #next canvas { width: 46px; height: 46px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 2px #fff; }
+  .keys { font-size: 12px; color: #a2907c; line-height: 1.7; }
+  .keys kbd {
+    background: #fff; border: 1px solid #e6d9c6; border-bottom-width: 2px;
+    border-radius: 5px; padding: 0 5px; font-size: 11px; font-family: inherit;
+  }
+  .keys .tip { margin: 0; }
+  /* 合成链改竖排：窄侧栏里每个物种各占一行，箭头不会被折散 */
+  .chain-title { margin: 9px 0 3px; font-size: 12px; letter-spacing: .06em; color: #a2907c; font-weight: 600; }
+  .chain { list-style: none; margin: 0; padding: 0; }
+  .chain li {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; line-height: 1.6; color: #8a7159; white-space: nowrap;
+  }
+  .chain li::before { content: "→"; flex: 0 0 13px; text-align: center; font-size: 11px; color: #d3b990; }
+  .chain li:first-child::before { content: "•"; color: #e0762f; }
+  button {
+    width: 100%; padding: 9px 0; font: inherit; font-size: 14px; font-weight: 600;
+    color: #fff; background: linear-gradient(180deg,#f2a45f,#e0762f); border: 0; border-radius: 12px;
+    box-shadow: 0 4px 0 #b85a1e, 0 6px 14px rgba(200,110,40,.3); cursor: pointer;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 #b85a1e; }
+
+  #over {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(255,250,240,.88); backdrop-filter: blur(3px); border-radius: 26px;
+    flex-direction: column; gap: 4px; padding: 24px; text-align: center; z-index: 2;
+  }
+  #over.on { display: flex; }
+  #over h1 { margin: 0; font-size: 26px; letter-spacing: .04em; }
+  #over p { margin: 2px 0 16px; font-size: 14px; line-height: 1.5; color: #57402e; }
+  #over button { width: 160px; max-width: 100%; }
+
+  @media (max-width: 760px) {
+    #wrap { flex-direction: column; }
+    #field { margin: 10px 10px 4px; height: 62vh; }
+    #side { flex: 1 1 auto; padding: 0 10px 10px; }
+    .card { padding: 8px 12px; }
+    .keys { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="field">
+      <canvas id="cv"></canvas>
+      <div id="hint">点一下，让毛球落下来 · 同级毛球碰在一起会合成下一级</div>
+      <div id="over"><h1 id="overTitle">合成完毕</h1><p id="overSub"></p><button id="again">再来一局</button></div>
+    </div>
+    <div id="side">
+      <div class="card">
+        <h2>下一只</h2>
+        <div id="next"><canvas id="nextCv" width="92" height="92"></canvas><div id="nextName">小雏鸟</div></div>
+      </div>
+      <div class="card">
+        <h2>记录</h2>
+        <div class="row"><span>得分</span><b id="score">0</b></div>
+        <div class="row"><span>最大合成</span><b id="best">小雏鸟</b></div>
+      </div>
+      <button id="reset">重新开始</button>
+      <div class="card keys">
+        <h2>玩法</h2>
+        <p class="tip">点击 / 空格 = 落球　·　← → = 微调</p>
+        <h3 class="chain-title">合成链</h3>
+        <!-- 由 main.js 按 Birds.SPECIES 动态生成：换谱系只需改 birds.js 一处 -->
+        <ol class="chain" id="chain"></ol>
+      </div>
+    </div>
+  </div>
+  <script src="birds.js"></script>
+  <script src="physics.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

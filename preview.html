@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>毛绒预览</title>
+<style>
+  body { margin: 0; background: linear-gradient(180deg,#fffdf7,#fdf4e4); color: #6b5341;
+         font: 14px/1.6 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  .grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px; align-items: flex-end; }
+  .cell { text-align: center; }
+  .cell canvas { display: block; background: rgba(255,255,255,.75); border-radius: 18px;
+                 box-shadow: 0 4px 14px rgba(120,90,60,.12); }
+  .cell b { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; }
+  .cell span { display: block; font-size: 11px; color: #a2907c; }
+  h1 { font-size: 15px; padding: 14px 16px 0; margin: 0; letter-spacing: .06em; }
+</style>
+</head>
+<body>
+<h1>9 级毛绒预览 · 每只放大 3 倍，便于看绒羽细节</h1>
+<div class="grid" id="grid"></div>
+<script src="birds.js"></script>
+<script>
+(function () {
+  const ZOOM = 1.2;
+  const PAD = 14;
+  const grid = document.getElementById('grid');
+  Birds.SPECIES.forEach((sp, t) => {
+    const r = Birds.radiusOf(t);
+    /* 关键：所有格子用同一个画布尺寸，球按同一比例画 ——
+       这样才能看出 9 种鸮的体型差异（合成链就是按真实体型排的）。
+       之前每格按自己的 r 自适应，反而看不出大小。 */
+    const maxR = Birds.radiusOf(Birds.SPECIES.length - 1);
+    const half = maxR * 1.7 + PAD;
+    const size = Math.round(half * 2 * ZOOM);
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    const cv = document.createElement('canvas');
+    cv.width = size; cv.height = size;
+    const ctx = cv.getContext('2d');
+    ctx.scale(ZOOM, ZOOM);
+    ctx.translate(half, half);
+    // 底部对齐：小鸟坐在地面上，看起来更自然
+    ctx.translate(0, half - maxR - PAD * 0.4);
+    Birds.draw(ctx, { tier: t, r: r, seed: 1000 + t * 7919 }, 3000);
+    cell.appendChild(cv);
+    const meta = document.createElement('span');
+    // 把形态差异写出来，肉眼对不上时能立刻看出是哪个参数在起作用
+    const faceName = { heart: '心形脸', disc: '圆脸盘', flat: '扁脸盘' }[sp.face] || sp.face;
+    const breastName = { barred: '横斑', streak: '纵纹', mottled: '麻点', plain: '净面' }[sp.breast] || sp.breast;
+    const crestName = sp.crest >= 90 ? '长耳羽' : sp.crest > 0 ? '小呆羽' : '圆头';
+    meta.textContent = `t${t} r${r.toFixed(0)} · ${faceName} · ${crestName} · ${breastName}`;
+    const label = document.createElement('b');
+    label.textContent = sp.name;
+    cell.appendChild(label);
+    cell.appendChild(meta);
+    // 眼睛颜色给个小色块，方便核对虹膜是否生效
+    if (sp.eyeCol) {
+      const sw = document.createElement('span');
+      sw.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:4px;background:${sp.eyeCol}`;
+      meta.insertBefore(sw, meta.firstChild);
+    }
+    grid.appendChild(cell);
+  });
+})();
+</script>
+</body>
+</html>

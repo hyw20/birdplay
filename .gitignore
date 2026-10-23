@@ -1,0 +1,13 @@
+# 调试截图：验证渲染时的临时产物，不是资产
+shots/
+
+# 数据备份：扩物种前的快照，由 tools/ 的幂等脚本重建
+data/birds.backup.json
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+node_modules/
+
+# 历史遗留：birds.json 的旧头部片段，已被正式文件取代
+data/parts_head.txt

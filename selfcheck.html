@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>birdplay 自检</title>
+<style>
+  body { font: 14px/1.7 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+         background: #fdf6e7; color: #6b5341; padding: 24px; max-width: 900px; }
+  h1 { font-size: 18px; }
+  .ok  { color: #2e7d32; font-weight: 600; }
+  .bad { color: #c62828; font-weight: 600; }
+  li { margin: 2px 0; }
+  #sum { font-size: 16px; margin: 12px 0; padding: 10px 14px; border-radius: 10px; background: #fff; }
+</style>
+</head>
+<body>
+<h1>birdplay 物理 / 合成 自检</h1>
+<div id="sum">运行中…</div>
+<ul id="out"></ul>
+<p style="color:#a2907c">打开本页即可跑。断言失败会标红并列在控制台。</p>
+
+<script src="birds.js"></script>
+<script src="physics.js"></script>
+<script>
+/* 直接驱动 Physics，不经过游戏循环，所以不受 rAF 节流影响。
+   这些断言覆盖的都是"踩过的坑"，回归时会立刻炸出来。 */
+(function () {
+  const results = [];
+  const H = 900, W = 600;
+  const world = { left: Physics.WALL, right: W - Physics.WALL, top: Physics.CEIL, bottom: H };
+  const R0 = Birds.radiusOf(0);
+
+  function fresh() { return new Physics(); }
+  function put(tier, x, y) {
+    const b = new Bird({ x, y, vx: 0, vy: 0, tier: tier, seed: tier * 977 + x });
+    b.r = Birds.radiusOf(tier);
+    return b;
+  }
+  function settle(ph, birds, n) {
+    let res = null;
+    for (let i = 0; i < (n || 400); i++) {
+      const r = ph.update(16, world, birds);
+      if (r) res = r;
+      if (birds.length === 0) break;
+    }
+    return res;
+  }
+  function check(name, cond, extra) {
+    results.push({ name, pass: !!cond, extra: extra || '' });
+  }
+
+  // 1) 单球自由落体必须停在地板上，且不被判负
+  {
+    const ph = fresh(), birds = [put(0, 300, -R0)];
+    const res = settle(ph, birds, 300);
+    const b = birds[0];
+    check('单球落到地板并停稳', b && Math.abs(b.y + b.r - H) < 2, `y=${b && Math.round(b.y)}`);
+    check('单球下落不误判负', res !== 'lose', `res=${res}`);
+  }
+
+  // 2) 同 x 落两球 → 合成（旧 bug：位置修正把球推开导致永不合成）
+  {
+    const ph = fresh(), birds = [put(0, 300, -R0), put(0, 300, -R0 - R0 * 2)];
+    const before = birds.length;
+    settle(ph, birds, 300);
+    check('同位置两球合成', birds.length === 1 && birds[0].tier === 1,
+      `n=${birds.length} tier=${birds[0] && birds[0].tier}`);
+  }
+
+  // 3) 地面上横向相邻（间距 < r1+r2）→ 必须合成
+  //    这正是用户报的 bug：「横着挨着很近也不合成」
+  {
+    const ph = fresh();
+    const y = H - R0;
+    const birds = [put(0, 300, y), put(0, 300 + R0 * 1.5, y)];
+    settle(ph, birds, 300);
+    check('地面横向相邻即合成', birds.length === 1 && birds[0].tier === 1,
+      `n=${birds.length} tier=${birds[0] && birds[0].tier}`);
+  }
+
+  // 4) 不同 tier 不该融合
+  {
+    const ph = fresh();
+    const y = H - R0;
+    const birds = [put(0, 300, y), put(1, 300 + 10, y)];
+    settle(ph, birds, 300);
+    check('不同 tier 不融合', birds.length === 2, `n=${birds.length}`);
+  }
+
+  // 5) 融合后球数必须是 -1（旧 bug：merge 漏 splice，球数净增）
+  {
+    const ph = fresh(), birds = [put(0, 300, H - R0), put(0, 310, H - R0)];
+    settle(ph, birds, 300);
+    check('融合净减一球', birds.length === 1, `n=${birds.length}`);
+  }
+
+  // 6) 基线：一次落球不会瞬间判负（旧 bug：出生帧 vy 大 + 警戒线贴顶）
+  {
+    const ph = fresh(), birds = [put(0, 300, -R0)];
+    const res = ph.update(16, world, birds);
+    check('落球首帧不判负', res !== 'lose', `res=${res}`);
+  }
+
+  // 7) 球不应越界（左右墙 + 地板）
+  {
+    const ph = fresh();
+    const birds = [put(0, 40, 100), put(0, W - 40, 100), put(5, 300, -200)];
+    settle(ph, birds, 600);
+    let oob = 0;
+    for (const b of birds) {
+      if (b.x - b.r < Physics.WALL - 1 || b.x + b.r > W - Physics.WALL + 1 || b.y + b.r > H + 1) oob++;
+    }
+    check('球不越出场地', oob === 0, `越界=${oob} n=${birds.length}`);
+  }
+
+  // 8) 融合链：同级两次必须升级
+  {
+    const ph = fresh(), birds = [put(3, 300, H - Birds.radiusOf(3)), put(3, 300, H - Birds.radiusOf(3) * 3)];
+    settle(ph, birds, 400);
+    check('tier3 + tier3 → tier4', birds.length === 1 && birds[0].tier === 4,
+      `n=${birds.length} tier=${birds[0] && birds[0].tier}`);
+  }
+
+  // 9) 到顶判负：球落定后球顶越过警戒线 → 必须判负。
+  //    用"矮场地"直接构造这个状态，不去依赖堆叠的涌现稳定性
+  //    （堆塔会受收敛性影响而抖散，拿它当断言基准太脆）。
+  {
+    const ph = fresh();
+    const shortBottom = 120;                       // 地板抬高，贴地的球顶必然越过警戒线
+    const w2 = { left: Physics.WALL, right: W - Physics.WALL, top: Physics.CEIL, bottom: shortBottom };
+    const birds = [put(0, 300, -R0)];
+    let res = null;
+    for (let i = 0; i < 300; i++) {
+      const r = ph.update(16, w2, birds);
+      if (r) res = r;
+    }
+    check('落定且越过警戒线 → 判负', res === 'lose',
+      `res=${res} y=${birds[0] && Math.round(birds[0].y)} 顶=${birds[0] && Math.round(birds[0].y - birds[0].r)} 线=${ph.loseLine}`);
+  }
+
+  // 10) 渲染不抛异常（毛绒渲染器冒烟测试）
+  {
+    let ok = true, err = '';
+    try {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 200;
+      const ctx = cv.getContext('2d');
+      for (let t = 0; t < Birds.SPECIES.length; t++) {
+        const sp = Birds.SPECIES[t];
+        const bird = { tier: t, r: Birds.radiusOf(t), seed: t * 31 + 7 };
+        ctx.save(); ctx.translate(100, 100);
+        Birds.draw(ctx, bird, 1234);
+        ctx.restore();
+      }
+    } catch (e) { ok = false; err = e.message; }
+    check('9 级渲染不抛异常', ok, err);
+  }
+
+  // ---- 输出 ----
+  const pass = results.filter(r => r.pass).length;
+  const sum = document.getElementById('sum');
+  const out = document.getElementById('out');
+  sum.innerHTML = `通过 <b>${pass}</b> / ${results.length}` +
+    (pass === results.length ? ' <span class="ok">全部通过 ✓</span>' : ' <span class="bad">有失败 ✗</span>');
+  sum.style.background = pass === results.length ? '#e8f5e9' : '#ffebee';
+  for (const r of results) {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="${r.pass ? 'ok' : 'bad'}">${r.pass ? '✓' : '✗'}</span> ${r.name}` +
+      (r.extra ? ` <code style="color:#a2907c">${r.extra}</code>` : '');
+    out.appendChild(li);
+  }
+  if (pass !== results.length) console.error('失败项:', results.filter(r => !r.pass));
+  window.__selfcheck = { pass, total: results.length, results };
+})();
+</script>
+</body>
+</html>
