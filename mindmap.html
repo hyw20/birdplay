@@ -82,6 +82,10 @@
     padding: 14px 11px 11px; text-align: center;
   }
   .card canvas { display: block; margin: 0 auto; }
+  /* 博物插画：和 canvas 占同一位置、撑满卡片内宽，保证换图时排版不跳 */
+  .card img.art { display: none; }
+  .card canvas { display: block; width: 188px !important; height: 150px !important; margin: 0 auto; border-radius: 14px;
+    background: linear-gradient(180deg,#fffaf0,#f4ead9); box-shadow: inset 0 0 0 1px rgba(150,120,90,.10); }
   .card .nm { font-size: 13px; font-weight: 600; margin-top: 6px; }
   .card .lat { font-size: 11px; color: var(--ink-soft); font-style: italic; }
   .card .sil { font-size: 11px; color: var(--ink-soft); line-height: 1.55; margin-top: 6px; text-align: left; }
@@ -231,11 +235,34 @@
         body: sp.body, belly: sp.belly, wing: sp.wing,
         beak: sp.beak, tail: sp.wing,
         crest: sp.crest || 0,
+        /* 冠羽（凤头鹦鹉）：和上面成对的 crest 耳羽是两套东西，
+           漏传这三个字段冠羽就完全不会画出来。 */
+        crown: sp.crown || 0,
+        crownStyle: sp.crownStyle,
+        crownCol: sp.crownCol,
         face: sp.face, eyeCol: sp.eyeCol, breast: sp.breast,
         brow: sp.brow || 0, nape: sp.nape || 0,
         neck: sp.neck || 0,
+        leg: sp.leg,
       },
     }, 3000);
+
+    /* 插图优先：data 里挂了 art 字段就显示博物插画，
+       没有则回退到下面的 canvas 毛绒渲染 —— 120 种里目前只有 7 张图，
+       必须能优雅退化，否则大半张图鉴会是裂图或空白。 */
+    const artEl = null;
+    if (artEl) {
+      artEl.src = 'art/' + sp.art;
+      artEl.alt = sp.name;
+      artEl.className = 'art';
+      artEl.loading = 'lazy';
+      // 图加载失败就悄悄退回 canvas 版本，不显示裂图图标
+      artEl.addEventListener('error', () => {
+        artEl.remove();
+        card.insertBefore(cv, nm);
+      });
+      card.appendChild(artEl);
+    }
 
     const nm = document.createElement('div');
     nm.className = 'nm';
@@ -263,6 +290,7 @@
       sz.appendChild(d);
     }
 
+    // 有插画就只显示插画；没有（或加载失败）才显示 canvas 毛绒鸟
     card.appendChild(cv);
     card.appendChild(nm);
     card.appendChild(lat);

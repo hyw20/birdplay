@@ -25,7 +25,8 @@
               "crest": 0,
               "size": 1.25,
               "silhouette": "长尾拖地、体侧铜红，脖子一道白环，剪影最有辨识度",
-              "habitat": "农田边缘、灌丛与芦苇荡"
+              "habitat": "农田边缘、灌丛与芦苇荡",
+              "art": "common-pheasant.png"
             },
             {
               "name": "红腹锦鸡",
@@ -39,7 +40,8 @@
               "crest": 40,
               "size": 1.2,
               "silhouette": "头顶金色羽冠、背披橙红披风、腹部通红，颜色最浓烈",
-              "habitat": "山地常绿阔叶林下的密灌"
+              "habitat": "山地常绿阔叶林下的密灌",
+              "art": "golden-pheasant.png"
             },
             {
               "name": "蓝孔雀",
@@ -109,7 +111,8 @@
               "crest": 40,
               "size": 1.25,
               "silhouette": "通身雪白、尾羽蓬松像马尾、红腿红脸，高原上的一团白",
-              "habitat": "青藏高原的针叶林与灌丛"
+              "habitat": "青藏高原的针叶林与灌丛",
+              "art": "white-eared-pheasant.png"
             },
             {
               "name": "大眼斑雉",
@@ -255,7 +258,8 @@
               "size": 1.35,
               "silhouette": "通体纯白、脖子弯成 S、嘴黄腿黑，剪影极简最好画",
               "neck": 3,
-              "habitat": "浅水湖泊、沼泽与稻田"
+              "habitat": "浅水湖泊、沼泽与稻田",
+              "art": "great-egret.png"
             },
             {
               "name": "苍鹭",
@@ -270,7 +274,8 @@
               "size": 1.3,
               "silhouette": "灰色大个子、头侧一抹黑冠羽、站姿笔挺，很有老成的味道",
               "neck": 3,
-              "habitat": "河岸、湖滨与鱼塘"
+              "habitat": "河岸、湖滨与鱼塘",
+              "art": "grey-heron.png"
             },
             {
               "name": "池鹭",
@@ -553,7 +558,8 @@
               "size": 1,
               "silhouette": "红得发亮的超长腿、黑白配色、走路像踩高跷的绅士",
               "habitat": "浅水塘、盐田与稻田",
-              "neck": 2
+              "neck": 2,
+              "art": "black-winged-stilt.png"
             }
           ]
         },
@@ -696,7 +702,8 @@
               "size": 1,
               "silhouette": "公鸭头颈泛金属绿、脖子一圈白环、灰身，辨识度极高",
               "neck": 1,
-              "habitat": "几乎任何水域，最亲近人类"
+              "habitat": "几乎任何水域，最亲近人类",
+              "art": "mallard.png"
             },
             {
               "name": "鸳鸯",
@@ -711,7 +718,8 @@
               "size": 0.95,
               "silhouette": "橙红脸颊带白眉、帆状橙色饰羽竖在背上，花得像小灯笼",
               "neck": 1,
-              "habitat": "林间溪流、山塘与公园湖"
+              "habitat": "林间溪流、山塘与公园湖",
+              "art": "mandarin-duck.png"
             },
             {
               "name": "加拿大黑雁",
@@ -756,7 +764,8 @@
               "size": 1.38,
               "silhouette": "嘴黄到尖端转黑、脖子笔挺，叫起来像喇叭一样洪亮",
               "habitat": "北方湖泊繁殖，南方河口越冬",
-              "neck": 2
+              "neck": 2,
+              "art": "whooper-swan.png"
             },
             {
               "name": "豆雁",
@@ -809,7 +818,8 @@
               "size": 1.05,
               "silhouette": "头上竖两撮黑羽、颈侧栗红，求偶时会跳碰胸舞",
               "neck": 1,
-              "habitat": "湖泊与水库，芦苇丛边"
+              "habitat": "湖泊与水库，芦苇丛边",
+              "art": "great-crested-grebe.png"
             },
             {
               "name": "小䴙䴘",
@@ -876,7 +886,8 @@
               "size": 0.95,
               "silhouette": "白身灰翅、红嘴红腿，夏天头上一块巧克力色，冬天变白",
               "habitat": "湖泊、河口的城市水域",
-              "neck": 1
+              "neck": 1,
+              "art": "black-headed-gull.png"
             },
             {
               "name": "银鸥",
@@ -990,7 +1001,8 @@
               "eyeCol": "#e8a83a",
               "breast": "streak",
               "brow": 1,
-              "habitat": "山地林缘与悬崖，夜行的顶级猎手"
+              "habitat": "山地林缘与悬崖，夜行的顶级猎手",
+              "art": "eurasian-eagle-owl.png"
             },
             {
               "name": "雪鸮",
@@ -1132,7 +1144,8 @@
               "crest": 40,
               "size": 1.45,
               "silhouette": "深褐大翼、后颈一撮金黄羽毛、目光如刀，最霸气的剪影",
-              "habitat": "高山与高原，俯瞰整片山谷"
+              "habitat": "高山与高原，俯瞰整片山谷",
+              "art": "golden-eagle.png"
             },
             {
               "name": "白头海雕",
@@ -1224,7 +1237,8 @@
               "crest": 0,
               "size": 0.95,
               "silhouette": "背披栗红带黑点、尖翅收拢，能原地悬停像钉在空中",
-              "habitat": "开阔草地与公路旁，能悬停"
+              "habitat": "开阔草地与公路旁，能悬停",
+              "art": "common-kestrel.png"
             },
             {
               "name": "游隼",
@@ -1339,7 +1353,8 @@
               "crest": 40,
               "size": 0.95,
               "silhouette": "黑白相间、屁股一抹鲜红、后脑也红，啄木时脑袋像打桩机",
-              "habitat": "阔叶林与公园老树"
+              "habitat": "阔叶林与公园老树",
+              "art": "great-spotted-woodpecker.png"
             },
             {
               "name": "绿啄木鸟",
@@ -1389,7 +1404,8 @@
               "crest": 40,
               "size": 0.95,
               "silhouette": "头顶一扇可开合的羽冠、细长下弯的嘴，像戴了花帽",
-              "habitat": "开阔草地、果园与村落"
+              "habitat": "开阔草地、果园与村落",
+              "art": "eurasian-hoopoe.png"
             },
             {
               "name": "戴胜（亚种）",
@@ -1439,7 +1455,8 @@
               "crest": 0,
               "size": 0.7,
               "silhouette": "小小一团、背是金属蓝绿、肚子橙红、大嘴插鱼，颜色最艳",
-              "habitat": "溪流、池塘边的低枝"
+              "habitat": "溪流、池塘边的低枝",
+              "art": "common-kingfisher.png"
             },
             {
               "name": "白胸翡翠",
@@ -1481,7 +1498,8 @@
               "crest": 0,
               "size": 0.95,
               "silhouette": "深蓝背、黑头白领、胸腹橙红，站在水边像块烧红的炭",
-              "habitat": "南方水田、池塘与林缘"
+              "habitat": "南方水田、池塘与林缘",
+              "art": "black-capped-kingfisher.png"
             }
           ]
         },
@@ -1586,10 +1604,12 @@
               "wing": "#c8c8cc",
               "beak": "#e8e0d0",
               "leg": "#8a8a90",
-              "crest": 40,
               "size": 1,
               "silhouette": "粉红身配灰翅膀、头顶可竖起一小丛粉冠，颜色最甜",
-              "habitat": "澳洲内陆开阔地"
+              "habitat": "澳洲内陆开阔地",
+              "crown": 0.72,
+              "crownStyle": "fan",
+              "crownCol": "#f2b8c4"
             },
             {
               "name": "葵花凤头鹦鹉",
@@ -1600,10 +1620,12 @@
               "wing": "#f0f0e8",
               "beak": "#3a3a40",
               "leg": "#8a8a90",
-              "crest": 40,
               "size": 1.25,
               "silhouette": "通身雪白、头顶一大丛柠檬黄冠羽能瞬间炸开，气场最强",
-              "habitat": "澳洲东部林地与城市公园"
+              "habitat": "澳洲东部林地与城市公园",
+              "crown": 1.05,
+              "crownStyle": "fan",
+              "crownCol": "#f5d94a"
             },
             {
               "name": "玄凤鹦鹉",
@@ -1614,10 +1636,12 @@
               "wing": "#8a8274",
               "beak": "#8a8a8a",
               "leg": "#8a8a90",
-              "crest": 40,
               "size": 0.85,
               "silhouette": "头顶一根竖起的呆毛、腮上一块橙红圆斑，表情最呆萌",
-              "habitat": "澳洲内陆干燥林地"
+              "habitat": "澳洲内陆干燥林地",
+              "crown": 1.25,
+              "crownStyle": "wisp",
+              "crownCol": "#c8c0ae"
             }
           ]
         }
@@ -1697,7 +1721,8 @@
               "crest": 0,
               "size": 0.7,
               "silhouette": "头顶墨黑、脸颊雪白、腹中一道黑纵纹，像穿了燕尾服",
-              "habitat": "林地边缘与公园"
+              "habitat": "林地边缘与公园",
+              "art": "japanese-tit.png"
             },
             {
               "name": "煤山雀",
@@ -1761,7 +1786,8 @@
               "crest": 0,
               "size": 0.6,
               "silhouette": "橄榄绿小团、眼睛一圈白绒毛像戴了副白框眼镜，最灵动",
-              "habitat": "林缘、果园与花园"
+              "habitat": "林缘、果园与花园",
+              "art": "japanese-white-eye.png"
             },
             {
               "name": "灰腹绣眼鸟",
@@ -1861,7 +1887,8 @@
               "crest": 0,
               "size": 1.1,
               "silhouette": "黑白分明、长尾带蓝绿金属光，站在枝头就报喜",
-              "habitat": "村落、公园与农田边的大树"
+              "habitat": "村落、公园与农田边的大树",
+              "art": "oriental-magpie.png"
             },
             {
               "name": "灰喜鹊",
@@ -1975,7 +2002,8 @@
               "crest": 0,
               "size": 0.72,
               "silhouette": "墨蓝背、橙红喉、尾巴像剪刀，春天屋檐下最准时的信号",
-              "habitat": "乡村屋檐与城市屋檐下"
+              "habitat": "乡村屋檐与城市屋檐下",
+              "art": "barn-swallow.png"
             },
             {
               "name": "金腰燕",

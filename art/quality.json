@@ -1,0 +1,39 @@
+{
+  "_note": "art/ 插图质量人工标注。由逐张目检得出（2026-10-24 第二版，wanx2.1-t2i-plus + signature 先行）。ok = 可直接上卡片；redo = 物种错误需重画；partial = 有小瑕疵但可用。",
+  "ok": {
+    "红腹锦鸡": "golden-pheasant.png — 金冠/橙黑颈带/青蓝背/超长尾全对，体型略纤细，无红腹",
+    "白马鸡": "white-eared-pheasant.png",
+    "环颈雉": "common-pheasant.png",
+    "大白鹭": "great-egret.png",
+    "苍鹭": "grey-heron.png",
+    "黑翅长脚鹬": "black-winged-stilt.png",
+    "普通翠鸟": "common-kingfisher.png — 蓝背/橙胸/白喉/长喙全对，喙略长",
+    "鸳鸯": "mandarin-duck.png",
+    "绿头鸭": "mallard.png",
+    "大天鹅": "whooper-swan.png",
+    "凤头䴙䴘": "great-crested-grebe.png — 双冠/红眼/白颈/倒影，完美",
+    "红嘴鸥": "black-headed-gull.png",
+    "雕鸮": "eurasian-eagle-owl.png — 耳羽/橙眼/脸盘/利爪全对",
+    "金雕": "golden-eagle.png — 深褐头/金色后颈，白头错误已消除",
+    "红隼": "common-kestrel.png",
+    "戴胜": "eurasian-hoopoe.png — 扇形冠羽/黑白斑纹翅/弯喙全对",
+    "蓝翡翠": "black-capped-kingfisher.png",
+    "暗绿绣眼鸟": "japanese-white-eye.png",
+    "喜鹊": "oriental-magpie.png",
+    "家燕": "barn-swallow.png",
+    "远东山雀": "japanese-tit.png — 黑头白颊/黄腹/腹中黑线全对，腹纹略偏",
+    "画眉": "hwamei.png — 两道白眉纹/褐身/张口鸣叫，已修正"
+  },
+  "partial": {
+    "大斑啄木鸟": "great-spotted-woodpecker.png — 形态/配色对，但红顶应枕部却画在头顶，尾羽未撑树干"
+  },
+  "redo": {
+    "红嘴相思鸟": "red-billed-leiothrix.png — 画成黑背红头北美红胸莺，物种完全错，红笔特征失效",
+    "白鹇": "silver-pheasant.png — 配色姿态对，但腿部关节反折属畸形，右下角有署名文字"
+  },
+  "blocked": {
+    "丹顶鹤": "red-crowned-crane.png — 通义内容审核 IPInfringementSuspect，四轮改写均被拦"
+  },
+  "_stats": "25 张：ok 22 / partial 1 / redo 2 / blocked 1",
+  "_next": "重画 redo 的 3 张：把 signature 改成纯中文描述 + 加 color 隔离；丹顶鹤需换供应商或手工补"
+}

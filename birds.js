@@ -257,7 +257,7 @@
   function beak(ctx, x, y, r, color) {
     ctx.save();
     ctx.translate(x, y);
-    const h = r * 0.46, w = r * 0.34;
+    const h = r * 0.50, w = r * 0.40;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(0, -h * 0.35);
@@ -332,6 +332,79 @@
     ctx.restore();
   }
 
+  /* 冠羽：凤头鹦鹉的招牌 —— 头顶正中一束能竖起来的羽冠。
+     和 earTufts 的区别（这两个特别容易搞混）：
+     - earTufts 是鸮类的**耳羽**：成对、长在头顶两侧、约 45° 外斜、中间空出额头
+     - headCrown 是鹦鹉的**冠羽**：单束、居中、竖直或轻微后倾、根在头顶正中
+     h 直接就是高度比例（相对头半径），数据里写 0.72 / 1.05 这样更直观。
+     style: 'fan' 宽扇形（葵花、粉红）| 'wisp' 细长弯钩（玄凤的呆毛）
+
+     画法是**填充羽片**而不是描边线：卡片里头半径只有 30 来像素，
+     描边的线宽算下来 2~3px，几根细线完全撑不起冠的体量（试过，像一撮须）。
+     每片羽画成根部宽、尖端收细的泪滴形，并排起来才有梳齿状的实体感。 */
+  function headCrown(ctx, r, h, color, seed, cy, style) {
+    if (!h) return;
+    const rand = rng(seed);
+    const oy = cy || 0;
+    const fan = style !== 'wisp';
+    const H = r * h;
+    const baseY = oy - r * 0.86;          // 根扎在头顶稍里侧，让根部被头球盖住
+    ctx.save();
+
+    /* 一片羽：从 (sx,sy) 长到 (tx,ty)，根部半宽 wb、尖端半宽 wt。
+       两条贝塞尔构成左右缘，尖端收成一条短线 —— 泪滴形。 */
+    function feather(sx, sy, tx, ty, wb, wt, tone, alpha) {
+      ctx.beginPath();
+      ctx.moveTo(sx - wb, sy);
+      ctx.quadraticCurveTo(sx - wb * 0.86, sy + (ty - sy) * 0.55, tx - wt, ty);
+      ctx.lineTo(tx + wt, ty);
+      ctx.quadraticCurveTo(sx + wb * 0.86, sy + (ty - sy) * 0.55, sx + wb, sy);
+      ctx.closePath();
+      ctx.fillStyle = tone;
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+    }
+
+    if (fan) {
+      /* 宽扇形：中央最高、两侧递减、末端向外张。
+         凤头鹦鹉竖起冠羽时就是一面扇墙。7 片并排。 */
+      const n = 7;
+      for (let i = 0; i < n; i++) {
+        const f = (i / (n - 1) - 0.5) * 2;            // -1..1
+        const len = H * (1 - Math.abs(f) * 0.36);     // 中间最长，两侧渐短
+        const sx = f * r * 0.17;                      // 根挤在头顶正中
+        const sy = baseY + Math.abs(f) * r * 0.04;
+        const tx = f * r * 0.50;                      // 末端向外张
+        const ty = sy - len;
+        const tone = rand() < 0.35 ? shade(color, 22) : rand() < 0.75 ? color : shade(color, -14);
+        feather(sx, sy, tx, ty, r * 0.105, r * 0.028, tone, 0.94);
+      }
+    } else {
+      /* 细长弯钩：一根宽主羽向后（-x）弯，尖端收细。
+         玄凤那根呆毛就是它，长度可以超过头半径。
+         只画一根 —— 加辅羽会变成天线阵，反而更假。 */
+      const sx = 0, sy = baseY;
+      const tx = -H * 0.34, ty = sy - H;
+      ctx.beginPath();
+      ctx.moveTo(sx - r * 0.085, sy);
+      ctx.quadraticCurveTo(-r * 0.075, sy - H * 0.52, tx - r * 0.012, ty);
+      ctx.lineTo(tx + r * 0.012, ty);
+      ctx.quadraticCurveTo(r * 0.055, sy - H * 0.52, sx + r * 0.085, sy);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.96;
+      ctx.fill();
+    }
+
+    // 根部铺一小片羽色，让冠羽"从头顶长出来"而不是浮在头上
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = shade(color, -6);
+    ctx.beginPath();
+    ctx.ellipse(0, baseY + r * 0.09, r * (fan ? 0.24 : 0.11), r * 0.09, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   // 尾羽三束（Q 版画法：圆身 + 向上翘的短尾）
   function tail(ctx, x, y, r, color, seed) {
     const rand = rng(seed + 77);
@@ -347,6 +420,169 @@
       furNap(ctx, 0, -L * 0.35, r * 0.28, color, seed + i * 13, { density: 2.6 });
       ctx.restore();
     }
+  }
+
+  // Compact plush-like feet: a small silhouette keeps species readable without
+  // turning every character into a long-legged cartoon.
+  function feet(ctx, r, color, seed, legScale) {
+    const rand = rng(seed + 601);
+    const scale = legScale == null ? 0.72 : legScale;
+    const leg = r * (0.14 + scale * 0.10);
+    const y = r * 0.86;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = color || '#8a6a4a';
+    ctx.lineWidth = Math.max(1.5, r * 0.09);
+    for (const side of [-1, 1]) {
+      const x = side * r * 0.32;
+      ctx.beginPath(); ctx.moveTo(x, y - r * 0.08); ctx.lineTo(x + side * r * 0.02, y + leg); ctx.stroke();
+      ctx.lineWidth = Math.max(1.2, r * 0.065);
+      ctx.beginPath();
+      ctx.moveTo(x + side * r * 0.02, y + leg);
+      ctx.lineTo(x + side * r * (0.20 + rand() * 0.04), y + leg + r * 0.02);
+      ctx.moveTo(x + side * r * 0.02, y + leg);
+      ctx.lineTo(x + side * r * (0.04 + rand() * 0.03), y + leg + r * 0.08);
+      ctx.moveTo(x + side * r * 0.02, y + leg);
+      ctx.lineTo(x - side * r * (0.10 + rand() * 0.02), y + leg + r * 0.04);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function plushWings(ctx, r, color, seed) {
+    ctx.save();
+    for (const side of [-1, 1]) {
+      const x = side * r * 0.74;
+      const y = r * 0.22;
+      const g = ctx.createLinearGradient(x, y - r * 0.42, x, y + r * 0.52);
+      g.addColorStop(0, shade(color, 20)); g.addColorStop(1, shade(color, -28));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(x - side * r * 0.20, y - r * 0.38);
+      ctx.quadraticCurveTo(x + side * r * 0.48, y - r * 0.22, x + side * r * 0.40, y + r * 0.34);
+      ctx.quadraticCurveTo(x + side * r * 0.18, y + r * 0.60, x - side * r * 0.12, y + r * 0.38);
+      ctx.quadraticCurveTo(x - side * r * 0.38, y + r * 0.08, x - side * r * 0.20, y - r * 0.38);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(65,48,35,.20)'; ctx.lineWidth = Math.max(0.8, r * 0.035);
+      ctx.beginPath(); ctx.moveTo(x - side * r * 0.07, y - r * 0.20); ctx.quadraticCurveTo(x + side * r * 0.16, y + r * 0.05, x + side * r * 0.13, y + r * 0.30); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function cheekPatch(ctx, r, color) {
+    ctx.save();
+    ctx.globalAlpha = 0.24;
+    ctx.fillStyle = color;
+    for (const side of [-1, 1]) {
+      ctx.beginPath(); ctx.ellipse(side * r * 0.55, -r * 0.02, r * 0.19, r * 0.12, side * 0.2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function bellyPanel(ctx, r, color) {
+    ctx.save();
+    const g = ctx.createRadialGradient(-r * 0.12, r * 0.18, r * 0.05, 0, r * 0.35, r * 0.58);
+    g.addColorStop(0, shade(color, 18)); g.addColorStop(1, shade(color, -18));
+    ctx.globalAlpha = 0.86; ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, r * 0.34, r * 0.54, r * 0.47, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Clean plush silhouette used by both the game and the field guide.
+  // It intentionally uses a few broad shapes instead of noisy feather strokes.
+  function drawPlush(ctx, bird, t) {
+    const sp = bird.spec || SPECIES[bird.tier] || SPECIES[0];
+    const r = bird.r;
+    const seed = bird.seed || 1;
+    const neck = sp.neck || 0;
+    const headR = neck ? r * 0.54 : r * 0.72;
+    const headY = neck ? -r * (0.58 + neck * 0.12) : -r * 0.34;
+    const bodyY = neck ? r * 0.22 : r * 0.16;
+    const bodyW = neck === 3 ? r * 0.86 : r * 0.98;
+    const bodyH = neck === 3 ? r * 0.62 : r * 0.78;
+    const shadeBody = shade(sp.body, -24);
+
+    ctx.save();
+    ctx.lineJoin = 'round';
+    // Tail is a single soft fan, with enough length to identify pheasants.
+    if (sp.tail) {
+      ctx.fillStyle = sp.tail;
+      ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.18, bodyY + r * 0.35);
+      ctx.quadraticCurveTo(-r * 0.92, bodyY + r * 0.72, -r * 1.05, bodyY + r * 1.06);
+      ctx.quadraticCurveTo(-r * 0.28, bodyY + r * 0.84, r * 0.08, bodyY + r * 0.42);
+      ctx.fill();
+    }
+    // Feet behind the body.
+    feet(ctx, r * 0.9, sp.leg, seed, neck === 3 ? 1.18 : 0.58);
+    // Round body.
+    const bg = ctx.createRadialGradient(-bodyW * 0.28, bodyY - bodyH * 0.5, r * 0.08, 0, bodyY, bodyW * 1.15);
+    bg.addColorStop(0, shade(sp.body, 28)); bg.addColorStop(0.68, sp.body); bg.addColorStop(1, shadeBody);
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.ellipse(0, bodyY, bodyW, bodyH, 0, 0, Math.PI * 2); ctx.fill();
+    // Head is slightly oversized like the reference plush bird.
+    const hg = ctx.createRadialGradient(-headR * 0.28, headY - headR * 0.35, r * 0.04, 0, headY, headR * 1.1);
+    hg.addColorStop(0, shade(sp.body, 30)); hg.addColorStop(0.72, sp.body); hg.addColorStop(1, shadeBody);
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(0, headY, headR, 0, Math.PI * 2); ctx.fill();
+
+    // A small forehead shine and cheek blush make the face feel like soft plush.
+    ctx.save();
+    ctx.globalAlpha = 0.20;
+    ctx.fillStyle = '#fff7df';
+    ctx.beginPath(); ctx.ellipse(-headR * 0.28, headY - headR * 0.38, headR * 0.24, headR * 0.11, -0.25, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = sp.belly || '#f7d9b0';
+    for (const side of [-1, 1]) {
+      ctx.beginPath(); ctx.ellipse(side * headR * 0.52, headY + headR * 0.18, headR * 0.16, headR * 0.09, side * 0.12, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // Soft belly bib.
+    ctx.fillStyle = sp.belly || shade(sp.body, 30);
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.ellipse(0, bodyY + bodyH * 0.14, bodyW * 0.53, bodyH * 0.57, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // A simple bib pattern adds character without bringing back noisy fur strokes.
+    if (sp.breast === 'barred' || sp.breast === 'streak') {
+      ctx.save(); ctx.globalAlpha = 0.24; ctx.strokeStyle = shade(sp.wing || sp.body, -28);
+      ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1, r * 0.045);
+      const rows = sp.breast === 'barred' ? 3 : 1;
+      for (let i = 0; i < rows; i++) {
+        const yy = bodyY + bodyH * (0.16 + i * 0.14);
+        ctx.beginPath(); ctx.moveTo(-bodyW * 0.22, yy); ctx.quadraticCurveTo(0, yy + r * 0.035, bodyW * 0.22, yy); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Two broad wings sit in front of the body.
+    for (const side of [-1, 1]) {
+      const wx = side * bodyW * 0.72;
+      const wy = bodyY + bodyH * 0.02;
+      ctx.fillStyle = shade(sp.wing || sp.body, -10);
+      ctx.beginPath();
+      ctx.moveTo(wx - side * r * 0.14, wy - bodyH * 0.42);
+      ctx.quadraticCurveTo(wx + side * r * 0.44, wy - bodyH * 0.18, wx + side * r * 0.38, wy + bodyH * 0.34);
+      ctx.quadraticCurveTo(wx + side * r * 0.18, wy + bodyH * 0.58, wx - side * r * 0.12, wy + bodyH * 0.28);
+      ctx.quadraticCurveTo(wx - side * r * 0.30, wy, wx - side * r * 0.14, wy - bodyH * 0.42);
+      ctx.fill();
+      ctx.save(); ctx.globalAlpha = 0.28; ctx.strokeStyle = shade(sp.wing || sp.body, 32); ctx.lineWidth = Math.max(1, r * 0.035); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(wx - side * r * 0.04, wy - bodyH * 0.20); ctx.quadraticCurveTo(wx + side * r * 0.15, wy + bodyH * 0.04, wx + side * r * 0.10, wy + bodyH * 0.23); ctx.stroke(); ctx.restore();
+    }
+
+    // Owl face discs remain a species cue, but are kept quiet and graphic.
+    if (sp.key === 'owl') facePlate(ctx, headR, sp.face || 'disc', shade(sp.belly || '#eee', 4), 0.72, headY);
+    const eyeR = sp.key === 'owl' ? headR * 0.19 : headR * 0.14;
+    const eyeY = headY - headR * 0.08;
+    const eyeX = headR * (sp.key === 'owl' ? 0.34 : 0.30);
+    beadEye(ctx, -eyeX, eyeY, eyeR, sp.eyeCol);
+    beadEye(ctx, eyeX, eyeY, eyeR, sp.eyeCol);
+    beak(ctx, 0, headY + headR * 0.25, headR * 0.78, sp.beak);
+
+    if (sp.crest) earTufts(ctx, headR, sp.crest, sp.wing || sp.body, seed + 40, headY);
+    if (sp.crown) headCrown(ctx, headR, sp.crown, sp.crownCol || sp.wing || sp.body, seed + 53, headY, sp.crownStyle);
+    ctx.restore();
   }
 
   /* 胸腹纹：胸口的花纹是 Q 版猫头鹰的辨识点之一，四种 */
@@ -484,10 +720,14 @@
      bird.spec 可直接传一个物种对象（导图页要用任意鸟渲染，不占用 tier），
      否则按 bird.tier 从 SPECIES 取。 */
   function draw(ctx, bird, t) {
+    drawPlush(ctx, bird, t);
+    return;
     const sp = bird.spec || SPECIES[bird.tier];
     const r = bird.r;
     const seed = bird.seed;
 
+    // Feet sit behind the round body so the silhouette stays soft and toy-like.
+    feet(ctx, r, sp.leg, seed, sp.neck === 3 ? 1.15 : sp.neck === 0 ? 0.58 : 0.78);
     tail(ctx, 0, r * 0.55, r, sp.tail, seed);
 
     // 双翼：贴在身体两侧的小绒球，比身体毛短一些、服帖一些
@@ -553,7 +793,7 @@
     const isOwl = sp.key === 'owl';
     const eyeX = hR * (isOwl ? 0.34 : 0.33);
     const eyeY = headC - hR * (isOwl ? 0.12 : 0.14);
-    const eyeR = hR * (isOwl ? 0.27 : 0.235);
+    const eyeR = hR * (isOwl ? 0.24 : 0.175);
     if (isOwl) {
       // 脸盘在绒毛之前铺底，否则会被长出的毛盖住。按物种走各自形状。
       facePlate(ctx, headC ? hR : r, sp.face || 'disc', shade(sp.belly, 8), 0.72, headC);
@@ -586,6 +826,9 @@
       });
     }
 
+    // Broad, readable wing masses give every species the same plush character language.
+    plushWings(ctx, r, sp.wing, seed + 17);
+
     // 腹部浅色斑（只在身体上）
     ctx.save();
     ctx.globalAlpha = 0.85;
@@ -605,6 +848,8 @@
     if (isOwl && sp.breast) breastPattern(ctx, r, sp.breast, shade(sp.wing, -46));
     if (isOwl && sp.nape) napeSpot(ctx, r);
 
+    if (!isOwl) cheekPatch(ctx, r, sp.belly || '#fffaf0');
+
     /* 头部细节统一在 (headX, 0) 的平移里画 —— 这样眼睛/喙/耳羽都自动
        跟着头球走，不必逐个加偏移（neckL 为 0 时 headX = 0，行为不变）。 */
     ctx.save();
@@ -612,6 +857,10 @@
 
     // 耳羽：成对、尖锐、向上外斜的两束羽条（角鸮型猫头鹰的招牌）
     if (sp.crest) earTufts(ctx, hR, sp.crest, sp.wing, seed + 40, headC);
+
+    /* 冠羽：凤头鹦鹉的标志，头顶正中单束，和上面成对的耳羽是两回事。
+       只在数据里写了 crown 的物种上出现，鸮类不受影响。 */
+    if (sp.crown) headCrown(ctx, hR, sp.crown, sp.crownCol || sp.wing, seed + 53, headC, sp.crownStyle);
 
     // 珠眼：Q 版的灵魂，占脸很大
     const ex = eyeX, ey = eyeY, er = eyeR;
